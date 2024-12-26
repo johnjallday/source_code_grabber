@@ -1,2 +1,13 @@
-.DS_Store
+# Rust
 target/
+**/*.rs.bk
+
+# IntelliJ / CLion / other JetBrains IDEs
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# macOS Finder
+.DS_Store
