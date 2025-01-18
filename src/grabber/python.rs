@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+
 use std::fs::{File, read_dir};
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
@@ -9,10 +9,9 @@ use super::tree::FileNode;
 /// Returns true if the given directory contains at least one `.py` file
 /// in its **top-level contents** (not checking subdirectories).
 fn has_python_file_in_top_level(dir: &Path) -> bool {
-    // Try reading the directory’s contents
     let entries = match read_dir(dir) {
         Ok(dir_iter) => dir_iter,
-        Err(_) => return false, // e.g., permission denied or not a directory
+        Err(_) => return false, 
     };
 
     for entry_result in entries {
@@ -46,8 +45,6 @@ pub fn find_python_project(mut start_dir: PathBuf) -> Option<PathBuf> {
         if has_req || has_setup || has_top_level_py {
             return Some(start_dir);
         }
-
-        // Move one directory up
         if !start_dir.pop() {
             break;
         }
@@ -75,7 +72,6 @@ pub fn grab_python(py_dir: &Path) -> io::Result<String> {
     }
 
     if py_files.is_empty() {
-        // If no `.py` files found at all, return empty
         return Ok(String::new());
     }
 

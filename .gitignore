@@ -11,3 +11,4 @@ target/
 
 # macOS Finder
 .DS_Store
+project_info.toml

@@ -1,19 +1,16 @@
-
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
-
 use walkdir::WalkDir;
 
-// Import the FileNode from our common `tree` module
 use super::tree::FileNode;
 
-/// Returns `Some(path)` if we find a Rust project by searching up to two levels.
-/// A “Rust project” is defined by having a `Cargo.toml` and a `src` directory.
-pub fn find_rust_project(mut start_dir: PathBuf) -> Option<PathBuf> {
+/// Returns `Some(path)` if we find a Go project by searching up to two levels.
+/// A “Go project” is defined by having a `go.mod` file or a `src` directory.
+pub fn find_go_project(mut start_dir: PathBuf) -> Option<PathBuf> {
     for _ in 0..3 {
-        if start_dir.join("Cargo.toml").exists() && start_dir.join("src").is_dir() {
-            return Some(start_dir);
+        if start_dir.join("go.mod").exists() || start_dir.join("src").is_dir() {
+            return Some(start_dir.clone());
         }
         if !start_dir.pop() {
             break;
@@ -22,32 +19,32 @@ pub fn find_rust_project(mut start_dir: PathBuf) -> Option<PathBuf> {
     None
 }
 
-/// Aggregates `.rs` files from the given `rust_dir`.
-/// Also prints a tree only of the `.rs` files.
-pub fn grab_rust(rust_dir: &Path) -> io::Result<String> {
-    // 1. Collect `.rs` files
-    let mut rs_files = Vec::new();
-    for entry in WalkDir::new(rust_dir)
+/// Aggregates `.go` files from the given `go_dir`.
+/// Also prints a tree only of the `.go` files.
+pub fn grab_go(go_dir: &Path) -> io::Result<String> {
+    // 1. Collect `.go` files
+    let mut go_files = Vec::new();
+    for entry in WalkDir::new(go_dir)
         .into_iter()
         .filter_map(Result::ok)
         .filter(|e| e.file_type().is_file())
     {
         let path = entry.path();
         if let Some(ext) = path.extension() {
-            if ext == "rs" {
-                rs_files.push(path.to_path_buf());
+            if ext == "go" {
+                go_files.push(path.to_path_buf());
             }
         }
     }
 
-    if rs_files.is_empty() {
+    if go_files.is_empty() {
         return Ok(String::new());
     }
 
-    // 2. Build a tree of `.rs` files
+    // 2. Build a tree of `.go` files
     let mut root_node = FileNode::new("");
-    for file_path in &rs_files {
-        let relative_path = file_path.strip_prefix(rust_dir).unwrap_or(file_path);
+    for file_path in &go_files {
+        let relative_path = file_path.strip_prefix(go_dir).unwrap_or(file_path);
         let components: Vec<String> = relative_path
             .components()
             .map(|c| c.as_os_str().to_string_lossy().to_string())
@@ -55,13 +52,13 @@ pub fn grab_rust(rust_dir: &Path) -> io::Result<String> {
         root_node.insert(&components);
     }
 
-    println!("Tree of `.rs` files in this Rust project:");
+    println!("Tree of `.go` files in this Go project:");
     root_node.print(0);
     println!();
 
     // 3. Aggregate
     let mut aggregated_contents = String::new();
-    for file_path in rs_files {
+    for file_path in go_files {
         let mut file = File::open(&file_path)?;
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
